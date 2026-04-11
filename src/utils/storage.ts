@@ -1,25 +1,12 @@
-import type { DdayItem } from '../types/dday';
+export function saveData(key: string, value: any): void {
+  localStorage.setItem(key, JSON.stringify(value));
+}
 
-const KEY = 'dday_items';
-
-export function loadItems(): DdayItem[] {
+export function loadData<T>(key: string, defaultValue: T): T {
   try {
-    const raw = localStorage.getItem(KEY);
-    return raw ? JSON.parse(raw) : [];
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : defaultValue;
   } catch {
-    return [];
+    return defaultValue;
   }
-}
-
-export function saveItems(items: DdayItem[]): void {
-  localStorage.setItem(KEY, JSON.stringify(items));
-}
-
-export function addItem(item: DdayItem): void {
-  const items = loadItems();
-  saveItems([...items, item]);
-}
-
-export function deleteItem(id: string): void {
-  saveItems(loadItems().filter(i => i.id !== id));
 }

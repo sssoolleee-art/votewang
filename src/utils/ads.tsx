@@ -1,9 +1,54 @@
 import { useEffect, useRef } from 'react';
-import { TossAds } from '@apps-in-toss/web-framework';
+import { TossAds, loadFullScreenAd, showFullScreenAd } from '@apps-in-toss/web-framework';
 
 export const AD_ID = {
-  banner: 'ait-ad-test-banner-id',
+  banner: 'ait.v2.test.banner',
+  interstitial: 'ait.v2.test.interstitial',
+  rewarded: 'ait.v2.test.rewarded',
 };
+
+export function showInterstitialAd(): Promise<void> {
+  return new Promise((resolve) => {
+    const cleanup = loadFullScreenAd({
+      options: { adGroupId: AD_ID.interstitial },
+      onEvent: (event) => {
+        if (event.type === 'loaded') {
+          showFullScreenAd({
+            options: { adGroupId: AD_ID.interstitial },
+            onEvent: (e) => {
+              if (e.type === 'dismissed') { cleanup(); resolve(); }
+            },
+            onError: () => { cleanup(); resolve(); },
+          });
+        }
+      },
+      onError: () => resolve(),
+    });
+    setTimeout(() => { cleanup(); resolve(); }, 30000);
+  });
+}
+
+export function showRewarded(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const cleanup = loadFullScreenAd({
+      options: { adGroupId: AD_ID.rewarded },
+      onEvent: (event) => {
+        if (event.type === 'loaded') {
+          showFullScreenAd({
+            options: { adGroupId: AD_ID.rewarded },
+            onEvent: (e) => {
+              if (e.type === 'userEarnedReward') { cleanup(); resolve(true); }
+              else if (e.type === 'dismissed') { cleanup(); resolve(false); }
+            },
+            onError: () => { cleanup(); resolve(false); },
+          });
+        }
+      },
+      onError: () => resolve(false),
+    });
+    setTimeout(() => { cleanup(); resolve(false); }, 30000);
+  });
+}
 
 export function BannerAd() {
   const ref = useRef<HTMLDivElement>(null);

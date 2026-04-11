@@ -1,121 +1,191 @@
-import { useEffect, useState } from 'react';
-import type { DdayItem } from '../types/dday';
-import { loadItems, deleteItem } from '../utils/storage';
-import { getDaysRemaining, formatDday, checkTodayMilestone, formatDate } from '../utils/ddayCalculator';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { POLLS, CATEGORY_LABELS, CATEGORY_COLORS } from '../data/polls';
+import type { Poll } from '../data/polls';
+import { loadData } from '../utils/storage';
 import { BannerAd } from '../utils/ads';
 
-export default function Home() {
-  const [items, setItems] = useState<DdayItem[]>([]);
+const STORAGE_KEY = 'poll_voted_ids';
+
+const CATEGORIES = ['all', 'trend', 'life', 'food', 'entertainment', 'opinion'] as const;
+type CategoryFilter = typeof CATEGORIES[number];
+
+export default function IndexPage() {
+  const navigate = useNavigate();
+  const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
+  const [votedIds, setVotedIds] = useState<string[]>([]);
 
   useEffect(() => {
-    setItems(loadItems());
+    setVotedIds(loadData<string[]>(STORAGE_KEY, []));
   }, []);
 
-  const milestones = items.filter(i => checkTodayMilestone(i) !== null);
+  const filtered = activeCategory === 'all'
+    ? POLLS
+    : POLLS.filter(p => p.category === activeCategory);
 
-  const sorted = [...items].sort((a, b) => {
-    const da = getDaysRemaining(a.targetDate);
-    const db = getDaysRemaining(b.targetDate);
-    if (da >= 0 && db >= 0) return da - db;
-    if (da < 0 && db < 0) return db - da;
-    return da >= 0 ? -1 : 1;
-  });
+  const hot = filtered.filter(p => p.isHot);
+  const regular = filtered.filter(p => !p.isHot);
 
-  function handleDelete(id: string) {
-    if (!window.confirm('삭제할까요?')) return;
-    deleteItem(id);
-    setItems(loadItems());
+  function formatVotes(n: number) {
+    if (n >= 10000) return `${(n / 10000).toFixed(1)}만`;
+    return n.toLocaleString();
+  }
+
+  function PollCard({ poll }: { poll: Poll }) {
+    const voted = votedIds.includes(poll.id);
+    const catColor = CATEGORY_COLORS[poll.category];
+    return (
+      <div
+        onClick={() => navigate(`/vote?id=${poll.id}`)}
+        style={{
+          background: '#fff',
+          borderRadius: 16,
+          padding: '16px',
+          marginBottom: 12,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          cursor: 'pointer',
+          position: 'relative',
+          border: voted ? '2px solid #8E44AD' : '2px solid transparent',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <span style={{
+            background: catColor,
+            color: '#fff',
+            fontSize: 11,
+            fontWeight: 700,
+            padding: '2px 8px',
+            borderRadius: 20,
+          }}>
+            {CATEGORY_LABELS[poll.category]}
+          </span>
+          {poll.isHot && (
+            <span style={{ fontSize: 11, color: '#E74C3C', fontWeight: 700 }}>HOT</span>
+          )}
+          {voted && (
+            <span style={{ fontSize: 11, color: '#8E44AD', fontWeight: 700, marginLeft: 'auto' }}>
+              투표 완료
+            </span>
+          )}
+        </div>
+        <p style={{ margin: '0 0 12px', fontSize: 16, fontWeight: 700, color: '#1a1a1a', lineHeight: 1.4 }}>
+          {poll.question}
+        </p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+          {poll.options.map(opt => (
+            <span key={opt.id} style={{
+              background: '#f5f5f5',
+              borderRadius: 20,
+              padding: '4px 10px',
+              fontSize: 13,
+              color: '#333',
+            }}>
+              {opt.emoji} {opt.text}
+            </span>
+          ))}
+        </div>
+        <p style={{ margin: 0, fontSize: 12, color: '#999' }}>
+          {formatVotes(poll.totalVotes)}명 참여
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F5F6FA', paddingBottom: 80 }}>
+    <div style={{ background: '#F4ECF7', minHeight: '100vh', paddingBottom: 80 }}>
       {/* 헤더 */}
-      <div style={{ background: '#3498DB', padding: '20px 16px 16px', color: '#fff' }}>
-        <div style={{ fontSize: 22, fontWeight: 700 }}>📅 D-day 카운터</div>
-        <div style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>중요한 날을 기억하세요</div>
+      <div style={{
+        background: '#8E44AD',
+        padding: '20px 20px 16px',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+      }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#fff' }}>
+          👑 투표왕
+        </h1>
+        <p style={{ margin: '4px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>
+          지금 가장 핫한 투표에 참여하세요
+        </p>
       </div>
 
-      <div style={{ padding: '0 16px' }}>
-        {/* 기념일 알림 */}
-        {milestones.length > 0 && (
-          <div style={{ margin: '16px 0', background: '#FFF9C4', border: '1px solid #F1C40F', borderRadius: 12, padding: '12px 16px' }}>
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>🎉 오늘의 기념일</div>
-            {milestones.map(item => {
-              const ms = checkTodayMilestone(item)!;
-              return (
-                <div key={item.id} style={{ fontSize: 14, color: '#555', marginBottom: 2 }}>
-                  {item.emoji} {item.title} — {ms}일째 되는 날이에요!
-                </div>
-              );
-            })}
-          </div>
+      {/* 카테고리 필터 */}
+      <div style={{
+        background: '#fff',
+        padding: '12px 16px',
+        overflowX: 'auto',
+        display: 'flex',
+        gap: 8,
+        position: 'sticky',
+        top: 76,
+        zIndex: 9,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+      }}>
+        {CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            style={{
+              background: activeCategory === cat ? '#8E44AD' : '#f0f0f0',
+              color: activeCategory === cat ? '#fff' : '#555',
+              border: 'none',
+              borderRadius: 20,
+              padding: '6px 14px',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+          >
+            {cat === 'all' ? '전체' : CATEGORY_LABELS[cat as Poll['category']]}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ padding: '16px 16px 0' }}>
+        {/* 인기 투표 */}
+        {hot.length > 0 && (
+          <>
+            <h2 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 700, color: '#555' }}>
+              🔥 인기 투표
+            </h2>
+            {hot.map(poll => <PollCard key={poll.id} poll={poll} />)}
+            <div style={{ marginBottom: 16 }}>
+              <BannerAd />
+            </div>
+          </>
         )}
 
-        {/* D-day 목록 */}
-        {sorted.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: '#999' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>📅</div>
-            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>아직 등록된 D-day가 없어요</div>
-            <div style={{ fontSize: 14 }}>아래 버튼으로 추가해보세요</div>
-          </div>
-        ) : (
-          sorted.map((item, idx) => {
-            const days = getDaysRemaining(item.targetDate);
-            return (
-              <div key={item.id}>
-                <div
-                  style={{
-                    marginTop: 12,
-                    background: '#fff',
-                    borderRadius: 16,
-                    padding: '16px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 14,
-                    cursor: 'pointer',
-                    borderLeft: `4px solid ${item.color}`,
-                  }}
-                  onClick={() => { window.location.href = `/detail?id=${item.id}`; }}
-                >
-                  <div style={{ fontSize: 36 }}>{item.emoji}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: '#222', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
-                    <div style={{ fontSize: 12, color: '#999' }}>{formatDate(item.targetDate)}</div>
+        {/* 일반 투표 */}
+        {regular.length > 0 && (
+          <>
+            <h2 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 700, color: '#555' }}>
+              전체 투표
+            </h2>
+            {regular.map((poll, i) => (
+              <div key={poll.id}>
+                <PollCard poll={poll} />
+                {(i + 1) % 5 === 0 && (
+                  <div style={{ marginBottom: 16 }}>
+                    <BannerAd />
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: item.color }}>{formatDday(days)}</div>
-                    {days === 0 && <div style={{ fontSize: 10, color: '#F39C12', fontWeight: 600 }}>오늘!</div>}
-                  </div>
-                </div>
-                {idx === 1 && <div style={{ marginTop: 12 }}><BannerAd /></div>}
+                )}
               </div>
-            );
-          })
+            ))}
+          </>
         )}
-
-        {/* 추가 버튼 */}
-        <button
-          onClick={() => { window.location.href = '/create'; }}
-          style={{
-            marginTop: 20,
-            width: '100%',
-            padding: '16px',
-            background: '#3498DB',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 14,
-            fontSize: 16,
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          + 새 D-day 추가
-        </button>
       </div>
 
       {/* 하단 배너 */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff' }}>
+      <div style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: '#fff',
+        zIndex: 10,
+      }}>
         <BannerAd />
       </div>
     </div>
