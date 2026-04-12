@@ -5,7 +5,7 @@ export default defineConfig({
   brand: {
     displayName: '투표왕',
     primaryColor: '#8E44AD',
-    icon: 'public/icon.png',
+    icon: 'https://static.toss.im/appsintoss/27863/cea5e6d4-5344-4a45-9531-48151f4ae05a.png',
   },
   web: {
     host: 'localhost',
