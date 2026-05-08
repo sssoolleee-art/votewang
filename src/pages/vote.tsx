@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { POLLS, CATEGORY_COLORS } from '../data/polls';
 import { loadData, saveData } from '../utils/storage';
-import { showInterstitialAd, BannerAd } from '../utils/ads';
+import { showInterstitialAd, BannerAd, isAdFree } from '../utils/ads';
 
 const STORAGE_KEY = 'poll_voted_ids';
 
@@ -16,6 +16,7 @@ export default function VotePage() {
   const [voted, setVoted] = useState(false);
   const [rewardUnlocked, setRewardUnlocked] = useState(false);
   const [rewardLoading, setRewardLoading] = useState(false);
+  const [adFree] = useState(isAdFree());
 
   useEffect(() => {
     if (!poll) return;
@@ -274,9 +275,11 @@ export default function VotePage() {
       </div>
 
       {/* 하단 배너 */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', zIndex: 10 }}>
-        <BannerAd />
-      </div>
+      {!adFree && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', zIndex: 10 }}>
+          <BannerAd />
+        </div>
+      )}
     </div>
   );
 }

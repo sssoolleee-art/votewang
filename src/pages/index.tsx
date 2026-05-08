@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { POLLS, CATEGORY_LABELS, CATEGORY_COLORS } from '../data/polls';
 import type { Poll } from '../data/polls';
 import { loadData } from '../utils/storage';
-import { BannerAd } from '../utils/ads';
+import { BannerAd, isAdFree, restoreAdFree, buyAdFree } from '../utils/ads';
 
 const STORAGE_KEY = 'poll_voted_ids';
 
@@ -14,9 +14,12 @@ export default function IndexPage() {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [votedIds, setVotedIds] = useState<string[]>([]);
+  const [adFree, setAdFree] = useState(isAdFree());
+  const [purchasing, setPurchasing] = useState(false);
 
   useEffect(() => {
     setVotedIds(loadData<string[]>(STORAGE_KEY, []));
+    restoreAdFree(() => setAdFree(true));
   }, []);
 
   const filtered = activeCategory === 'all'
@@ -109,6 +112,22 @@ export default function IndexPage() {
         </p>
       </div>
 
+      {/* IAP 버튼 */}
+      {!adFree && (
+        <div style={{ padding: '10px 16px', background: '#F9F0FF' }}>
+          <button
+            onClick={() => { setPurchasing(true); buyAdFree(() => setAdFree(true), () => setPurchasing(false)); }}
+            disabled={purchasing}
+            style={{
+              width: '100%', padding: '12px', borderRadius: 12, border: 'none',
+              background: '#F3E8FF', color: '#8E44AD', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            }}
+          >
+            {purchasing ? '처리 중...' : '광고 없이 즐기기 ₩990'}
+          </button>
+        </div>
+      )}
+
       {/* 카테고리 필터 */}
       <div style={{
         background: '#fff',
@@ -151,9 +170,7 @@ export default function IndexPage() {
               🔥 인기 투표
             </h2>
             {hot.map(poll => <PollCard key={poll.id} poll={poll} />)}
-            <div style={{ marginBottom: 16 }}>
-              <BannerAd />
-            </div>
+            {!adFree && <div style={{ marginBottom: 16 }}><BannerAd /></div>}
           </>
         )}
 
@@ -166,10 +183,8 @@ export default function IndexPage() {
             {regular.map((poll, i) => (
               <div key={poll.id}>
                 <PollCard poll={poll} />
-                {(i + 1) % 5 === 0 && (
-                  <div style={{ marginBottom: 16 }}>
-                    <BannerAd />
-                  </div>
+                {!adFree && (i + 1) % 5 === 0 && (
+                  <div style={{ marginBottom: 16 }}><BannerAd /></div>
                 )}
               </div>
             ))}
@@ -178,16 +193,11 @@ export default function IndexPage() {
       </div>
 
       {/* 하단 배너 */}
-      <div style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        background: '#fff',
-        zIndex: 10,
-      }}>
-        <BannerAd />
-      </div>
+      {!adFree && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', zIndex: 10 }}>
+          <BannerAd />
+        </div>
+      )}
     </div>
   );
 }
