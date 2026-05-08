@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { POLLS, CATEGORY_COLORS } from '../data/polls';
 import { loadData, saveData } from '../utils/storage';
-import { showInterstitialAd, showRewarded, BannerAd } from '../utils/ads';
+import { showInterstitialAd, BannerAd } from '../utils/ads';
 
 const STORAGE_KEY = 'poll_voted_ids';
 
@@ -50,9 +50,9 @@ export default function VotePage() {
 
   async function handleUnlockReward() {
     setRewardLoading(true);
-    const earned = await showRewarded();
+    await showInterstitialAd();
     setRewardLoading(false);
-    if (earned) setRewardUnlocked(true);
+    setRewardUnlocked(true);
   }
 
   const selected = poll.options.find(o => o.id === selectedId) ?? poll.options[0];

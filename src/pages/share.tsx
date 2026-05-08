@@ -25,7 +25,7 @@ export default function SharePage() {
   }
 
   const topOption = [...poll.options].sort((a, b) => b.voteCount - a.voteCount)[0];
-  const catColor = CATEGORY_COLORS[poll.category];
+  void CATEGORY_COLORS;
 
   async function handleShareLink() {
     await shareLink(
