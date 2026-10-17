@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { POLLS, CATEGORY_COLORS } from '../data/polls';
 import { loadData, saveData } from '../utils/storage';
 import { showInterstitialAd, BannerAd, isAdFree } from '../utils/ads';
+import { SubsidyPromo, logGrowth } from '../utils/growth';
 
 const STORAGE_KEY = 'poll_voted_ids';
 
@@ -40,6 +41,7 @@ export default function VotePage() {
     if (voted) return;
     setSelectedId(optId);
     setVoted(true);
+    logGrowth('vote_cast');
     const ids = loadData<string[]>(STORAGE_KEY, []);
     saveData(STORAGE_KEY, [...ids, poll!.id]);
   }
@@ -269,6 +271,7 @@ export default function VotePage() {
       </div>
 
       {/* 하단 배너 */}
+      <SubsidyPromo from="votewang" />
       {!adFree && (
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', zIndex: 10 }}>
           <BannerAd />
