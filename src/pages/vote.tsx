@@ -5,6 +5,7 @@ import { loadData, saveData } from '../utils/storage';
 import { showInterstitialAd, BannerAd, isAdFree } from '../utils/ads';
 import { SubsidyPromo, logGrowth } from '../utils/growth';
 import { markSuccess } from '../utils/review';
+import { FeedbackButton } from '../utils/feedback';
 
 const STORAGE_KEY = 'poll_voted_ids';
 
@@ -273,6 +274,7 @@ export default function VotePage() {
 
       {/* 하단 배너 */}
       <SubsidyPromo from="votewang" />
+      <FeedbackButton app="votewang" />
       {!adFree && (
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', zIndex: 10 }}>
           <BannerAd />
