@@ -45,7 +45,7 @@ export default function VotePage() {
   }
 
   async function handleNext() {
-    await showInterstitialAd();
+    if (!adFree) await showInterstitialAd();
     navigate('/');
   }
 
@@ -69,12 +69,6 @@ export default function VotePage() {
         alignItems: 'center',
         gap: 12,
       }}>
-        <button
-          onClick={() => navigate('/')}
-          style={{ background: 'none', border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer', padding: 0 }}
-        >
-          ←
-        </button>
         <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 16, fontWeight: 700 }}>투표하기</span>
       </div>
 
@@ -267,7 +261,7 @@ export default function VotePage() {
                 onClick={handleNext}
                 style={{ ...btnStyle('#8E44AD'), flex: 1 }}
               >
-                다음 투표
+                {adFree ? '다음 투표' : '다음 투표 (광고 후 이동)'}
               </button>
             </div>
           </>

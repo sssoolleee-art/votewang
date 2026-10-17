@@ -50,12 +50,6 @@ export default function SharePage() {
         alignItems: 'center',
         gap: 12,
       }}>
-        <button
-          onClick={() => navigate(-1)}
-          style={{ background: 'none', border: 'none', color: '#fff', fontSize: 22, cursor: 'pointer', padding: 0 }}
-        >
-          ←
-        </button>
         <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 16, fontWeight: 700 }}>결과 공유</span>
       </div>
 
