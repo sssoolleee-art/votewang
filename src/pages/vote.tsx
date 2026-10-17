@@ -4,6 +4,7 @@ import { POLLS, CATEGORY_COLORS } from '../data/polls';
 import { loadData, saveData } from '../utils/storage';
 import { showInterstitialAd, BannerAd, isAdFree } from '../utils/ads';
 import { SubsidyPromo, logGrowth } from '../utils/growth';
+import { markSuccess } from '../utils/review';
 
 const STORAGE_KEY = 'poll_voted_ids';
 
@@ -41,7 +42,7 @@ export default function VotePage() {
     if (voted) return;
     setSelectedId(optId);
     setVoted(true);
-    logGrowth('vote_cast');
+    markSuccess(); logGrowth('vote_cast');
     const ids = loadData<string[]>(STORAGE_KEY, []);
     saveData(STORAGE_KEY, [...ids, poll!.id]);
   }
